@@ -5,7 +5,8 @@
  * It outputs the resulting sum along with some performance statistics.
  *
  * Changes in this version:
- * - uses linear indexing scheme to take advantage of global memory coalescing in kernel (see kernel.cu)
+ * - uses a "linear indexing scheme" to take advantage of global memory coalescing 
+ *   in the kernel (see kernel.cu).
  */
 
 #include <stdio.h>
@@ -49,12 +50,7 @@ int main(int argc, char *argv[])
     init_array(host_array, n);
 
     // Allocate device buffers
-    // Note: Input buffer needs to be of size n.
-    // Output buffer is used to store partial results after each kernel launch. On first launch,
-    // each block will reduce block_size * 2 values down to 1 value (except last kernel, which may
-    // reduce less than block_size * 2 values down to 1 value (if  n is not a multiple of block_size * 2)).
-    // On subsequent launches, we need even less output buffer space.
-    // Therefore output buffer size needs to be equal to the number of blocks required for first launch.
+    // (Same as last time)
     threads_needed = n / 2; // we'll need one thread to add every 2 elements
     blocks = threads_needed / block_threads + \ // we'll need this many blocks
         (threads_needed % block_threads > 0 ? 1 : 0); // plus one extra if threads_needed
@@ -90,6 +86,7 @@ int main(int argc, char *argv[])
 
         // call the kernel
         reduce<<<blocks, block_threads>>>(dev_input, dev_output, remaining);
+
         // re-compute our size information for the next iteration
         remaining = blocks; // After the previous kernel call, each block has reduced its chunk down to a single partial sum
         threads_needed = remaining / 2; // each thread added 2 elements
@@ -97,7 +94,8 @@ int main(int argc, char *argv[])
         // divisible by block_threads
 
         // if we will need to do another iteration, flip (swap) the device input and output buffers;
-        // i.e. the output buffer from the last call becomes input buffer for the next call, and the input buffer from last call is re-used to store output for the next call.
+        // i.e. the output buffer from the last call becomes input buffer for the next call, and the input buffer 
+        // from last call is re-used to store output for the next call.
         // Note: no data is transferred back to the host here, this is just a pointer operation
         if (remaining > 1)
         {
@@ -108,7 +106,8 @@ int main(int argc, char *argv[])
     }
     stop_timer(&(perf.kernel_timer));
     // Note: the kernel launches in the loop above are asychronous, so this may not necessarily catch kernel errors...
-    // If they're not caught here, they'll be caught in the check_error() call after the next blocking operation (the GPU -> CPU data transfer below).
+    // If they're not caught here, they'll be caught in the check_error() call after the next blocking operation 
+    // (the GPU -> CPU data transfer below).
     check_error(cudaGetLastError(), "Error launching kernel.");
 
     // Transfer the element in position 0 of the dev_output buffer back to the host. This is the final sum.
