@@ -5,7 +5,7 @@
  * It outputs the resulting sum along with some performance statistics.
  *
  * Changes in this version:
- * - uses shared memory in kernel to speed up execution (see kernel.cu)
+ * - uses shared memory in the kernel to speed up memory accesses (see kernel.cu)
  */
 
 #include <stdio.h>
@@ -121,7 +121,8 @@ int main(int argc, char *argv[])
         }
     }
     // Note: the kernel launches in the loop above are asychronous, so this may not necessarily catch kernel errors...
-    // If they're not caught here, they'll be caught in the check_error() call after the next blocking operation (the cudaEventSynchronize() call below).
+    // If they're not caught here, they'll be caught in the check_error() call after the next blocking operation 
+    // (the cudaEventSynchronize() call below).
     check_error( cudaGetLastError(), "Error in kernel." );
 
     // For each stream, transfer the element in position 0 of it's output array
