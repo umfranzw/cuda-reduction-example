@@ -4,7 +4,8 @@
  * passed in as a command line arg.
  * It outputs the resulting sum along with some performance statistics.
  *
- * Initial (naive) implementation. Uses interleaved memory access in kernel (see kernel.cu)
+ * This is the initial (naive) implementation. Uses interleaved memory 
+ * access in the kernel (see kernel.cu).
  */
 
 #include <stdio.h>
@@ -51,7 +52,7 @@ int main(int argc, char *argv[])
     // Note: Input buffer needs to be of size n.
     // Output buffer is used to store partial results after each kernel launch. On first launch,
     // each block will reduce block_size * 2 values down to 1 value (except last kernel, which may
-    // reduce less than block_size * 2 values down to 1 value (if  n is not a multiple of block_size * 2)).
+    // reduce less than block_size * 2 values down to 1 value if  n is not a multiple of block_size * 2).
     // On subsequent launches, we need even less output buffer space.
     // Therefore output buffer size needs to be equal to the number of blocks required for first launch.
     threads_needed = n / 2; // we'll need one thread to add every 2 elements
@@ -92,11 +93,12 @@ int main(int argc, char *argv[])
         // re-compute our size information for the next iteration
         remaining = blocks; // After the previous kernel call, each block has reduced its chunk down to a single partial sum
         threads_needed = remaining / 2; // each thread added 2 elements
-        blocks = threads_needed / block_threads + (threads_needed % block_threads ? 1 : 0); // again, might need one extra block is threads_needed is not evenly
-        // divisible by block_threads
+        blocks = threads_needed / block_threads + (threads_needed % block_threads ? 1 : 0); // again, might need one extra block if threads_needed
+                                                                                            // is not evenly divisible by block_threads
 
         // if we will need to do another iteration, flip (swap) the device input and output buffers;
-        // i.e. the output buffer from the last call becomes input buffer for the next call, and the input buffer from last call is re-used to store output for the next call.
+        // i.e. the output buffer from the last call becomes input buffer for the next call, and the input buffer from last call is 
+        // re-used to store output for the next call.
         // Note: no data is transferred back to the host here, this is just a pointer operation
         if (remaining > 1)
         {
@@ -107,7 +109,8 @@ int main(int argc, char *argv[])
     }
     stop_timer(&(perf.kernel_timer));
     // Note: the kernel launches in the loop above are asychronous, so this may not necessarily catch kernel errors...
-    // If they're not caught here, they'll be caught in the check_error() call after the next blocking operation (the GPU -> CPU data transfer below).
+    // If they're not caught here, they'll be caught in the check_error() call after the next blocking operation 
+    // (the GPU -> CPU data transfer below).
     check_error(cudaGetLastError(), "Error launching kernel.");
 
     // Transfer the element in position 0 of the dev_output buffer back to the host. This is the final sum.
@@ -118,7 +121,7 @@ int main(int argc, char *argv[])
 
     // Record the final clock time
     stop_timer(&(perf.total_timer));
-    // Since GPU operates asynchronously, wait until the final time has been recorded before continuing on to print the results below
+    // Since the GPU operates asynchronously, wait until the final time has been recorded before continuing on to print the results below
     // (this synchronizes the device and the host).
     cudaEventSynchronize(perf.total_timer.stop); 
 
