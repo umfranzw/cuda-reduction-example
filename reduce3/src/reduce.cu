@@ -5,7 +5,7 @@
  * It outputs the resulting sum along with some performance statistics.
  *
  * Changes in this version:
- * - uses multiple streams to overlap data transfers with kernel execution (reduce.cu)
+ * - uses multiple streams to overlap data transfers with kernel execution (see below)
  */
 
 #include <stdio.h>
@@ -72,17 +72,17 @@ int main(int argc, char *argv[])
     
     // Create our streams
     
-    // You can think of a stream as a queue that stores GPU commands (like "run this
-    // kernel", "do this data transfer", etc.).
+    // You can think of a stream as a queue that stores GPU commands like "run this
+    // kernel", "do this data transfer", etc.
     // When a CUDA program contains multiple streams, the GPU scheduler
     // chooses up to one data command *and* one kernel execution command from the
     // heads of each of the queues, and runs them simultaneously
     // (this assumes all the kernel's dependencies have been satisfied - i.e. it's not
     // waiting on any buffers to be transfered). The scheduler takes care of making sure
     // dependencies between events in the queues are satisfied, so we don't have to
-    // worry about it (much...we still need to make sure we're inserting commands into
+    // worry about it (much...it's still good to make sure we're inserting commands into
     // the queues in a reasonably intelligent order).
-    // Each stream is represented by an object - we'll store these in an array.
+    // Each stream is represented by a cudaStream_t struct - we'll store these in an array.
     cudaStream_t streams[STREAMS];
     for (int i = 0; i < STREAMS; i++)
     {
@@ -95,7 +95,7 @@ int main(int argc, char *argv[])
     for (int i = 0; i < STREAMS; i++)
     {
         // We can use the cudaMemCpyAsync() function to perform the transfer
-        // asynchronously (host doesn't block). Right than doing the transfer right
+        // asynchronously (host doesn't block). Rather than doing the transfer right
         // away, cudaMemCpyAsync() just deposits a data transfer command
         // into the current stream (again, think of a stream like a queue that contains
         // commands for the GPU to carry out). It will be run as soon as the GPU's DMA
@@ -113,8 +113,8 @@ int main(int argc, char *argv[])
     // Launch kernels
     // Kernels are always launched asynchronously, so calling them in this loop
     // does not cause the host to block. Instead, each call deposits a command to
-    // execute the kernel into the current stream. Unlike last time, we do need to tell
-    // CUDA stream to launch each kernel in - see note in loop below for how.
+    // execute the kernel into the current stream. Unlike last time, we need to tell
+    // CUDA wich stream to launch each kernel in - see note in loop below for how.
     remaining = n / STREAMS; // number of elements remaining *in each stream*
     while (remaining > 1)
     {
@@ -144,7 +144,7 @@ int main(int argc, char *argv[])
         blocks = threads_needed / block_threads + (threads_needed % block_threads ? 1 : 0);
 
         // If we will need to do another iteration, flip (swap) the device input and
-        // output buffers *in each stream*
+        // output buffers *in each stream*.
         if (remaining > 1)
         {
             // Note: This does not require the host to block, as it's just a pointer operation
@@ -160,15 +160,16 @@ int main(int argc, char *argv[])
         }
     }
     // Note: the kernel launches in the loop above are asychronous, so this may not necessarily catch kernel errors...
-    // If they're not caught here, they'll be caught in the check_error() call after the next blocking operation (the cudaEventSynchronize() call below).
+    // If they're not caught here, they'll be caught in the check_error() call after the next blocking operation 
+    // (the cudaEventSynchronize() call below).
     check_error( cudaGetLastError(), "Error in kernel." );
 
-    // For each stream, transfer the element in position 0 of it's output array
+    // For each stream, transfer the element in position 0 of its output array
     // back to the host. We'll add these values together on the CPU to compute
     // the final sum in a loop further down.
     for (int i = 0; i < STREAMS; i++)
     {
-        // We'll do this asynchronously using cudaMemcpyAsync too - though it doesn't
+        // We'll do this asynchronously using cudaMemcpyAsync() too - though it doesn't
         // really save *that much* time since we're only transferring a single float...
         status = cudaMemcpyAsync(&(partial_results[i]), dev_outputs[i], sizeof(float), cudaMemcpyDeviceToHost, streams[i]);
         check_error(status, "Error on GPU->CPU cudaMemcpy for partial_result.");
@@ -180,7 +181,7 @@ int main(int argc, char *argv[])
     // (this synchronizes the device and the host).
     cudaEventSynchronize(perf.total_timer.stop);
 
-    // Add up the partial result from each stream on the host.
+    // Add up the partial results from each stream on the host.
     // Note: the fact that these few final adds are done on the CPU is factored into
     // the throughput calculation - see the print_results() function in perf.cu for more info.
     final_sum = 0;
@@ -197,7 +198,7 @@ int main(int argc, char *argv[])
     // since we created one pair for each stream.
     for (int i = 0; i < STREAMS; i++)
     {
-        status = cudaStreamDestroy(streams[i]); // Note: have to destroy the stream objects too...
+        status = cudaStreamDestroy(streams[i]); // Note: have to destroy the stream structs too...
         check_error(status, "Error destroying stream.");
         status = cudaFree(dev_inputs[i]);
         check_error(status, "Error calling cudaFree on device buffer.");
