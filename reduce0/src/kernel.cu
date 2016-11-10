@@ -15,12 +15,15 @@ __global__ void reduce(float *input, float *output, unsigned int n)
 {
     // Determine this thread's various ids
     unsigned int block_size = blockDim.x;
-    unsigned int local_id = threadIdx.x;
+    unsigned int thread_id = threadIdx.x;
     unsigned int block_id = blockIdx.x;
+
+    // The size of the chunk of data this thread's block is working on.
+    unsigned int chunk_size = block_size * 2;
 
     // Calculate the index that this block's chunk of values starts at.
     // Each thread adds 2 values, so each block adds a total of block_size * 2 values.
-    unsigned int index = block_id * (block_size * 2);
+    unsigned int block_start = block_id * chunk_size;
     
     // Perform the reduction using "interleaved indexing" (each thread adds a pair of
     // elements right next to each other).
@@ -29,13 +32,16 @@ __global__ void reduce(float *input, float *output, unsigned int n)
     // The number of threads required halves on each iteration.
     unsigned int left;  // holds index of left operand
     unsigned int right; // holds index or right operand
-    for (unsigned int stride = 1; stride < block_size * 2; stride *= 2)
+    unsigned int threads = block_size; // number of active threads (on current iteration)
+    for (unsigned int stride = 1; stride < chunk_size; stride *= 2, threads /= 2)
     {
-        left = index + local_id * stride * 2;
+        // There's a distance of stride between each pair of left and right operand indices,
+        // so there's a distance of stride * 2 between consecutive left indices
+        left = block_start + thread_id * (stride * 2);
         right = left + stride;
 
-        if (right - index < block_size * 2 // read: "If this thread should be
-                                           // active on this iteration of the reduction."
+        if (thread_id < threads // read: "If this thread should be
+                                // active on this iteration of the reduction."
             && right < n) // If we're the last block, we may be running more threads
                           // than we need - this condition makes sure they dont interfere.
         {
@@ -52,8 +58,8 @@ __global__ void reduce(float *input, float *output, unsigned int n)
     // partial result to the output buffer at position "block_id". After the code
     // below completes, the output buffer will contain exactly <number of blocks>
     // consecutive partial results.
-    if (!local_id)
+    if (!thread_id)
     {
-        output[block_id] = input[index];
+        output[block_id] = input[block_start];
     }
 }
