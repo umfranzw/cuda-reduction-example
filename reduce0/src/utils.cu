@@ -2,6 +2,7 @@
   */
 
 #include "utils.h"
+#include "reduce.h"
 #include <time.h>
 #include <stdio.h>
 

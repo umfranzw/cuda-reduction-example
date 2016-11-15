@@ -2,6 +2,7 @@
   */
 
 #include "utils.h"
+#include "reduce.h"
 #include <stdio.h>
 
 // Checks if an error occurred using the given status.
