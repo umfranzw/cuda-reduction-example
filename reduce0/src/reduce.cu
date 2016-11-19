@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
     // Allocate device buffers
     // Note: Input buffer needs to be of size n.
     // Output buffer is used to store partial results after each kernel launch. On first launch,
-    // each block will reduce block_size * 2 values down to 1 value (except last kernel, which may
+    // each block will reduce block_size * 2 values down to 1 value (except last block, which may
     // reduce less than block_size * 2 values down to 1 value if  n is not a multiple of block_size * 2).
     // On subsequent launches, we need even less output buffer space.
     // Therefore output buffer size needs to be equal to the number of blocks required for first launch.
@@ -75,7 +75,8 @@ int main(int argc, char *argv[])
     check_error(status, "Error on CPU->GPU cudaMemcpy for host_array.");
 
     // Launch kernel
-    // Note: We call the kernel multiple times - each call reduces the size of the array by 2.
+    // Note: We call the kernel multiple times - each call reduces the size of the array 
+    //       to the current number of blocks.
     start_timer(&(perf.kernel_timer));
     remaining = n; // tracks number of elements left to add
     while (remaining > 1) // continue until we have a single value left (the final sum)
