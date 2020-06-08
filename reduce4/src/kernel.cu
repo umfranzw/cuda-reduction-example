@@ -2,8 +2,8 @@
 
 /* In this kernel, we will use shared memory. Shared memory is faster than global
  * memory. This means that if we're accessing global memory multiple times (as our
- * previous kernel did), we can gain some performance by copying the stuff we need from
- * global memory into shared memory, and then operating soley on this shared memory for
+ * previous kernel did), we can sometimes gain some performance by copying the stuff we need
+ * from global memory into shared memory, and then operating soley on this shared memory for
  * the rest of the kernel. However, shared memory is volatile (it disapears between kernel
  * calls), so we also need to add one extra step at the end to copy our final result from
  * shared memory back to global memory.
@@ -24,15 +24,15 @@ __global__ void reduce(float *input, float *output, unsigned int n)
     // set chunk_size to the usual (full) number of elements (block_size * 2)
 
     // Declare an array in shared memory. All threads in a block will have access to this
-    // array. The size will be (chunk_size / 2), which is a maximum of 1024 / 2 = 512.
+    // array. The size will be (chunk_size / 2), which is a maximum of 2048 / 2 = 1024.
     // The reason we don't need the full chunk_size space is because we'll do an extra step
     // when we transfer our data from global to shared memory: first, we'll read half of it
     // (chunk_size / 2 elements) from global memory and store it in the shared array. Then, we'll
     // read the other half and add it into the existing values in the shared array.
     // In other words, we'll do the first step of our usual for loop in advance. 
     // This means our for loop can be run for one fewer iteration than usual.
-    __shared__ float shared[512]; // Note: ideally, the size here would read chunk_size / 2,
-                                  // but CUDA forces us to use a constant (512) so the compiler
+    __shared__ float shared[1024]; // Note: ideally, the size between the square braces here would read
+                                  // "chunk_size / 2", but CUDA forces us to use a constant so that the compiler
                                   // can deduce how much shared memory will be required at compile time.
 
     // Calculate the index that this block's chunk of values starts at.

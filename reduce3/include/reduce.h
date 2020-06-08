@@ -9,7 +9,7 @@
 // and each chunk will be transferred to the GPU asynchronously. As soon as one
 // chunk has been transferred, we can start running a kernel on it. This kernel can
 // run *while* the next chunk is being transferred.
-#define STREAMS 32
+#define STREAMS 16
 
 // If True, host array will be filled with floats in [0, 1].
 // Otherwise, array will be filled with 1.0 (useful for debugging,
@@ -17,6 +17,6 @@
 #define USE_RAND_VALS 1
 
 // If True, host will print debugging information (e.g. thread block sizes, etc.)
-#define DEBUG_INFO 1
+#define DEBUG_INFO 0
 
 #endif

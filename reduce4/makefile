@@ -29,7 +29,7 @@ OBJS = $(patsubst %.cu, $(OBJDIR)/%.o, $(SRCS))
 # name of the compiler
 CC = nvcc
 # additional compiler flags to pass in
-CFLAGS = -arch=sm_13 -Wno-deprecated-gpu-targets -L. -I$(INCLUDE_DIR)
+CFLAGS = -L. -I$(INCLUDE_DIR)
 # libraries for the linker
 LIBS = -lm
 

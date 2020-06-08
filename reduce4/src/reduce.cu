@@ -93,6 +93,7 @@ int main(int argc, char *argv[])
         printf("Launching kernels:\n");
         printf("remaining: %u\n", remaining);
         printf("blocks: %u\n", blocks);
+        printf("block_threads: %u\n", block_threads);
         printf("threads_needed: %u\n", threads_needed);
         printf("\n");
 #endif

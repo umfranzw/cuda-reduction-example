@@ -1,26 +1,24 @@
-/* Comp 4510 - OpenMP Sum Reduction Example
+/* Comp 4510 - Sequential CPU-Based Sum Reduction Example
  *
  * This code performs a sum reduction on an array of size n = 2^i, where i is
  * passed in as a command line arg.
  * It outputs the resulting sum along with some performance statistics.
  *
- * CPU implmentation to establish baseline for comparison with GPU versions.
- * Uses OpenMP to take advantage of multiple cores.
+ * This is a sequential CPU implmentation to establish baseline for comparison with GPU versions.
+ * We include the OpenMP library only for its timing functions (manually timing things in C is nasty...),
+ * we're not parallelizing anything here.
  */
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <omp.h>
 #include "utils.h"
+#include <time.h>
+#include <omp.h>
 
-// Performs a simple sum reduction using OpenMP
-// Note: OpenMP automatically sets the number of threads to
-// the number of available cores on the host system's processor.
 float reduce(float *array, int n)
 {
     float total = 0;
 
-#pragma omp parallel for reduction(+:total)
     for (int i = 0; i < n; i++)
     {
         total += array[i];
@@ -31,7 +29,7 @@ float reduce(float *array, int n)
 
 int main(int argc, char *argv[])
 {
-    // Grab i from the command line and calculate n
+    //Grab i from the command line and calculate n
     const int n = parse_args(argc, argv);
 
     float *array;

@@ -71,8 +71,7 @@ int main(int argc, char *argv[])
     check_error(status, "Error on CPU->GPU cudaMemcpy for host_array.");
 
     // Launch kernel
-    // Note: We call the kernel multiple times - each call reduces the size of the array 
-    //       to the current number of blocks.
+    // Note: We call the kernel multiple times - each call reduces the size of the array by 2.
     start_timer(&(perf.kernel_timer));
     remaining = n; // tracks number of elements left to add
     while (remaining > 1) // continue until we have a single value left (the final sum)

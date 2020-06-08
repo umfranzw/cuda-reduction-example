@@ -31,7 +31,7 @@ CC = gcc
 # additional compiler flags to pass in
 CFLAGS = -fopenmp -Wall --std=c99 -L. -I$(INCLUDE_DIR)
 # libraries for the linker
-LIBS = -lm
+LIBS = -fopenmp -lm
 
 ####################
 # Compiling rules: #

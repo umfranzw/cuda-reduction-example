@@ -32,7 +32,7 @@ __global__ void reduce(float *input, float *output, unsigned int n)
     // The number of threads required halves on each iteration.
     unsigned int left;  // holds index of left operand
     unsigned int right; // holds index or right operand
-    unsigned int threads = block_size; // number of active threads (on current iteration)
+    unsigned int threads = block_size;
     for (unsigned int stride = 1; stride < chunk_size; stride *= 2, threads /= 2)
     {
         // There's a distance of stride between each pair of left and right operand indices,

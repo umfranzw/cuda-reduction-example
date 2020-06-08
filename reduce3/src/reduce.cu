@@ -132,9 +132,8 @@ int main(int argc, char *argv[])
             // Here we specify two extra args in the <<<>>> brackets. The first
             // (the 0) has to do with "dynamic shared memory", which we don't need
             // to worry about, while the second (streams[i]) is the stream we want
-            // to launch the kernel in. It's worth noting that while our GPU can overlap
-            // data transfers and kernel executions, it cannot launch multiple kernels
-            // at once. Newer GPUs can, however.
+            // to launch the kernel in. Note that our GPU can launch multiple kernels
+            // at once, provided all dependencies are satistifed.
             reduce<<<blocks, block_threads, 0, streams[i]>>>(dev_inputs[i], dev_outputs[i], remaining);
         }
 
